@@ -119,9 +119,17 @@ public abstract class UserJourney {
         .contains(new GetPostsResponse(1L, "Hello world!"))
         .contains(new GetPostsResponse(2L, "Locked Post"));
   }
-
   @Test
   @Order(11)
+  void uc3_get_post_details() {
+    GetPostDetailsResponse response = rest.getForObject(baseUrl() + "posts/1", GetPostDetailsResponse.class);
+    assertThat(response)
+        .extracting(GetPostDetailsResponse::id, GetPostDetailsResponse::title, GetPostDetailsResponse::body)
+        .containsExactly(1L, "Hello world!", "European Software Crafters");
+  }
+
+  @Test
+  @Order(14)
   void uc4_create_post() {
     admin.purgeQueue("post-created-event"); // drain the queue
 
@@ -134,14 +142,6 @@ public abstract class UserJourney {
     assertThat(new String(receive.getBody())).contains("Post created");
   }
 
-  @Test
-  @Order(14)
-  void uc3_get_post_details() {
-    GetPostDetailsResponse response = rest.getForObject(baseUrl() + "posts/1", GetPostDetailsResponse.class);
-    assertThat(response)
-        .extracting(GetPostDetailsResponse::id, GetPostDetailsResponse::title, GetPostDetailsResponse::body)
-        .containsExactly(1L, "Hello world!", "European Software Crafters");
-  }
 
 
 
