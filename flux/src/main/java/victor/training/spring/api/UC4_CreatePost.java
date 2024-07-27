@@ -18,8 +18,6 @@ import victor.training.spring.sql.CommentRepo;
 import victor.training.spring.sql.Post;
 import victor.training.spring.sql.PostRepo;
 
-import java.util.function.Function;
-
 import static java.time.LocalDateTime.now;
 
 @Slf4j
@@ -38,7 +36,7 @@ public class UC4_CreatePost {
   @PostMapping("posts")
   @PreAuthorize("isAuthenticated()")
   @Transactional
-  public Mono<Void> createPost(@RequestBody CreatePostRequest request) {
+  public Mono<Long> createPost(@RequestBody CreatePostRequest request) {
 //    return  postRepo.save(request.toPost())
 //            .delayUntil(post -> sendPostCreatedEvent("Post created: " + post.id()))
 //            .flatMap(post-> createInitialComment(post.id(), request.title()))
@@ -60,8 +58,8 @@ public class UC4_CreatePost {
 //            .then();
 
         return  postRepo.save(request.toPost())
-            .flatMap(post -> saveCommentAndSendEventConcurrently(request,post))
-            .then();
+            .delayUntil(post -> saveCommentAndSendEventConcurrently(request,post))
+            .map(Post::id);
   }
   private Mono<Void> saveCommentAndSendEventConcurrently(CreatePostRequest request, Post post){
     var eventMono = sendPostCreatedEvent("Post created: " + post.id());
