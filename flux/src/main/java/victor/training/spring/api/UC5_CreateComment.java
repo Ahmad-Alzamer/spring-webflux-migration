@@ -28,17 +28,20 @@ public class UC5_CreateComment {
   }
 
   @PostMapping("posts/{postId}/comments")
-  public Mono<Void> createComment(@PathVariable long postId, @RequestBody CreateCommentRequest request) {
+  public Mono<Long> createComment(@PathVariable long postId, @RequestBody CreateCommentRequest request) {
     return postRepo.findById(postId)
             .single()
             .filterWhen(createCanCommentPredicate(request))
-            .flatMap(post -> commentRepo.save(new Comment(post.id(), request.comment(), request.name())))
             .switchIfEmpty(Mono.error(new IllegalArgumentException("Comment Rejected")))
-            .then();
+            .map(post -> new Comment(post.id(), request.comment(), request.name()))
+            .flatMap(commentRepo::save)
+            .map(Comment::id);
   }
   private Function<Post, Mono<Boolean>> createCanCommentPredicate( CreateCommentRequest request){
-    return post -> Mono.zip(isSafe(post.body(), request.comment()), isUnlocked(post.authorId()))
-            .map(tuple -> tuple.getT1() && tuple.getT2());
+//    return post -> Mono.zip(isSafe(post.body(), request.comment()), isUnlocked(post.authorId()))
+//            .map(tuple -> tuple.getT1() && tuple.getT2());
+
+    return post -> Mono.zip(isSafe(post.body(), request.comment()), isUnlocked(post.authorId()), Boolean::logicalAnd); // same as above but a bit more concise
   }
 
   private Mono<Boolean> isUnlocked(long authorId) {
