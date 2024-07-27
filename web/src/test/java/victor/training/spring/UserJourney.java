@@ -105,7 +105,7 @@ public abstract class UserJourney {
   @Test
   @Order(100)
   @Timeout(value = 99, unit = MILLISECONDS)
-  void uc2_get_all_authors_again_is_faster_due_to_caching() {
+  void uc1_get_all_authors_again_is_faster_due_to_caching() {
     assertThat(rest.getForObject(baseUrl() + "authors", GetAuthorsResponse[].class))
         .contains(new GetAuthorsResponse(1000L, "John DOE", "jdoe@example.com", "Long description"));
   }

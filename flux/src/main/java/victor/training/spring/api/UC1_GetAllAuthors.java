@@ -51,12 +51,17 @@ public class UC1_GetAllAuthors {
     private final WebClient webClient;
     @Cacheable("contact-email")
     public Mono<String> fetchEmail(long authorId) {
-      log.info("Retrieving email for author {}", authorId);
+      log.info("building Mono Chain to Retrieve email for author {}", authorId);
       String uri = "http://localhost:9999/contact/" + authorId + "/email";
-      return webClient.get()
+      return  webClient.get()
               .uri(uri)
               .retrieve()
-              .bodyToMono(String.class);
+              .bodyToMono(String.class)
+              .doOnSubscribe( response -> log.info("Retrieving email for author {}", authorId))
+              .doOnSuccess( response -> log.info("Retrieved email for author {}", authorId))
+              .cache()  // will be cached, indefinitely
+//              .cache(Duration.of(5, ChronoUnit.MINUTES)) // not really needed since the resulting Mono chain is cached by the @Cacheable and the chain will be evicted after expiration
+              ;
     }
   }
 }
