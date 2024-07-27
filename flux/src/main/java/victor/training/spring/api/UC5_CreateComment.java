@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import victor.training.spring.sql.Comment;
@@ -15,7 +14,6 @@ import victor.training.spring.sql.CommentRepo;
 import victor.training.spring.sql.Post;
 import victor.training.spring.sql.PostRepo;
 
-import java.util.NoSuchElementException;
 import java.util.function.Function;
 
 @Slf4j
@@ -32,7 +30,7 @@ public class UC5_CreateComment {
   @PostMapping("posts/{postId}/comments")
   public Mono<Void> createComment(@PathVariable long postId, @RequestBody CreateCommentRequest request) {
     return postRepo.findById(postId)
-            .switchIfEmpty(Mono.error(new NoSuchElementException()))
+            .single()
             .filterWhen(createCanCommentPredicate(request))
             .flatMap(post -> commentRepo.save(new Comment(post.id(), request.comment(), request.name())))
             .switchIfEmpty(Mono.error(new IllegalArgumentException("Comment Rejected")))
