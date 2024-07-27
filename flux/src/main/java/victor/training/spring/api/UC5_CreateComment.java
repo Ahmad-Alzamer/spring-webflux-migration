@@ -15,6 +15,7 @@ import victor.training.spring.sql.CommentRepo;
 import victor.training.spring.sql.Post;
 import victor.training.spring.sql.PostRepo;
 
+import java.util.NoSuchElementException;
 import java.util.function.Function;
 
 @Slf4j
@@ -31,11 +32,15 @@ public class UC5_CreateComment {
   @PostMapping("posts/{postId}/comments")
   public Mono<Void> createComment(@PathVariable long postId, @RequestBody CreateCommentRequest request) {
     return postRepo.findById(postId)
-            .filterWhen(post -> isSafe(post.body(), request.comment()))
-            .filterWhen(post-> isUnlocked(post.authorId()))
+            .switchIfEmpty(Mono.error(new NoSuchElementException()))
+            .filterWhen(createCanCommentPredicate(request))
             .flatMap(post -> commentRepo.save(new Comment(post.id(), request.comment(), request.name())))
             .switchIfEmpty(Mono.error(new IllegalArgumentException("Comment Rejected")))
             .then();
+  }
+  private Function<Post, Mono<Boolean>> createCanCommentPredicate( CreateCommentRequest request){
+    return post -> Mono.zip(isSafe(post.body(), request.comment()), isUnlocked(post.authorId()))
+            .map(tuple -> tuple.getT1() && tuple.getT2());
   }
 
   private Mono<Boolean> isUnlocked(long authorId) {
