@@ -15,6 +15,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -97,6 +98,7 @@ public abstract class UserJourney {
 
   @Test
   @Order(1)
+  @WithMockUser("user")
   void uc1_get_all_authors() {
     assertThat(rest.getForObject(baseUrl() + "authors", GetAuthorsResponse[].class))
         .contains(new GetAuthorsResponse(1000L, "John DOE", "jdoe@example.com", "Long description"));
@@ -104,6 +106,7 @@ public abstract class UserJourney {
 
   @Test
   @Order(100)
+  @WithMockUser("user")
   @Timeout(value = 99, unit = MILLISECONDS)
   void uc1_get_all_authors_again_is_faster_due_to_caching() {
     assertThat(rest.getForObject(baseUrl() + "authors", GetAuthorsResponse[].class))
@@ -112,6 +115,7 @@ public abstract class UserJourney {
 
   @Test
   @Order(10)
+  @WithMockUser("user")
   void uc2_get_all_posts() {
     GetPostsResponse[] posts = rest.getForObject(baseUrl() + "posts", GetPostsResponse[].class);
     initialPostsCounts = posts.length;
@@ -121,6 +125,7 @@ public abstract class UserJourney {
   }
   @Test
   @Order(11)
+  @WithMockUser("user")
   void uc3_get_post_details() {
     GetPostDetailsResponse response = rest.getForObject(baseUrl() + "posts/1", GetPostDetailsResponse.class);
     assertThat(response)
@@ -130,6 +135,7 @@ public abstract class UserJourney {
 
   @Test
   @Order(14)
+  @WithMockUser("user")
   void uc4_create_post() {
     admin.purgeQueue("post-created-event"); // drain the queue
 
@@ -148,6 +154,7 @@ public abstract class UserJourney {
   private String newPostId;
   @Test
   @Order(15)
+  @WithMockUser("user")
   void uc4_get_posts_showsNewlyCreatedOne() {
     GetPostsResponse[] posts = rest.getForObject(baseUrl() + "posts", GetPostsResponse[].class);
     assertThat(posts).describedAs("The posts after creating a new one").hasSize(initialPostsCounts + 1);
@@ -159,6 +166,7 @@ public abstract class UserJourney {
 
   @Test
   @Order(16)
+  @WithMockUser("user")
   void uc4_get_new_post_details_shows_initial_comment() {
     GetPostDetailsResponse response = rest.getForObject(baseUrl() + "posts/" + newPostId, GetPostDetailsResponse.class);
     assertThat(response.comments()).describedAs("Comments are missing at " + baseUrl() + "posts/" + newPostId).hasSize(1);
@@ -166,6 +174,7 @@ public abstract class UserJourney {
 
   @Test
   @Order(17)
+  @WithMockUser("user")
   void uc4_create_post_tx_failed() {
     HttpEntity<CreatePostRequest> requestEntity = new HttpEntity<>(
         new CreatePostRequest("x".repeat(254), "Some Body", 15L), basicAuth());
@@ -176,6 +185,7 @@ public abstract class UserJourney {
 
   @Test
   @Order(18)
+  @WithMockUser("user")
   void uc4_get_new_post_details_showsLoggedInUser_in_comment() {
     GetPostDetailsResponse response = rest.getForObject(baseUrl() + "posts/" + newPostId, GetPostDetailsResponse.class);
     assertThat(response.comments().get(0).name()).isEqualTo("user");
@@ -183,12 +193,14 @@ public abstract class UserJourney {
 
   @Test
   @Order(20)
+  @WithMockUser("user")
   void uc5_create_comment_ok() {
     rest.postForObject(baseUrl() + "posts/1/comments", new CreateCommentRequest(NEW_COMMENT, "troll"), Void.class);
   }
 
   @Test
   @Order(22)
+  @WithMockUser("user")
   void uc5_get_post_by_id_shows_new_comment() {
     GetPostDetailsResponse response = rest.getForObject(baseUrl() + "posts/1", GetPostDetailsResponse.class);
     assertThat(response.comments())
@@ -197,6 +209,7 @@ public abstract class UserJourney {
 
   @Test
   @Order(23)
+  @WithMockUser("user")
   void uc5_create_comment_fails_for_locked_post() {
     assertThatThrownBy(() -> rest.postForObject(baseUrl() + "posts/2/comments", new CreateCommentRequest(NEW_COMMENT, "u"), Void.class))
         .hasMessageContaining("Comment Rejected");
@@ -204,6 +217,7 @@ public abstract class UserJourney {
 
   @Test
   @Order(23)
+  @WithMockUser("user")
   void uc5_create_comment_fails_for_nonexisting_postId() {
     assertThatThrownBy(() -> rest.postForObject(baseUrl() + "posts/119142/comments",new CreateCommentRequest(NEW_COMMENT, "troll"), Void.class))
         .isInstanceOf(HttpServerErrorException.InternalServerError.class);
@@ -212,6 +226,7 @@ public abstract class UserJourney {
 
   @Test
   @Order(300)
+  @WithMockUser("user")
   void uc6_getPostLikes() {
     UC6_GetPostLikes.LikeEvent event = new UC6_GetPostLikes.LikeEvent(1L, 1);
     rabbitTemplate.convertAndSend("likes", "likes.web", event);

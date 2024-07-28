@@ -3,12 +3,11 @@ package victor.training.spring.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import victor.training.spring.exception.CommentRejectedException;
 import victor.training.spring.sql.Comment;
 import victor.training.spring.sql.CommentRepo;
 import victor.training.spring.sql.Post;
@@ -28,11 +27,12 @@ public class UC5_CreateComment {
   }
 
   @PostMapping("posts/{postId}/comments")
+  @ResponseStatus(HttpStatus.CREATED)
   public Mono<Long> createComment(@PathVariable long postId, @RequestBody CreateCommentRequest request) {
     return postRepo.findById(postId)
             .single()
             .filterWhen(createCanCommentPredicate(request))
-            .switchIfEmpty(Mono.error(new IllegalArgumentException("Comment Rejected")))
+            .switchIfEmpty(Mono.error(new CommentRejectedException()))
             .map(post -> new Comment(post.id(), request.comment(), request.name()))
             .flatMap(commentRepo::save)
             .map(Comment::id);

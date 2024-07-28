@@ -4,6 +4,13 @@ GET http://localhost:8080/actuator/health
 ### actuator/health
 GET http://localhost:8081/actuator/health
 
+### actuator/health authorized
+GET http://localhost:8081/actuator/health
+Authorization: Basic user user
+
+### actuator/metrics
+GET http://localhost:8081/actuator/metrics
+
 
 ### get likes - Web
 GET http://localhost:8080/posts/1/likes
@@ -11,6 +18,28 @@ GET http://localhost:8080/posts/1/likes
 
 ### get likes - Flux
 GET http://localhost:8081/posts/3/likes
+Authorization: Basic user user
 
 ### get likes-live - Flux
 GET http://localhost:8081/posts/3/likes-live
+
+### create post
+POST http://localhost:8081/posts
+Authorization: Basic user user
+content-type: application/json
+
+{"title": "some test", "body": "some content", "authorId": 34}
+
+### flux - create comment to locked post fails
+POST http://localhost:8081/posts/2/comments
+Authorization: Basic user user
+content-type: application/json
+
+{"comment": "test", "name": "test"}
+
+### web - create comment to locked post fails
+POST http://localhost:8080/posts/2/comments
+Authorization: Basic user user
+content-type: application/json
+
+{"comment": "test", "name": "test"}

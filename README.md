@@ -55,3 +55,8 @@ fetch('http://localhost:8081/posts/3/likes-live').then(response => {
         console.error(error);
     });
 ```
+
+
+
+# TODOs
+1. check why ``@ResponseStatus`` on the Exception is not reflected in the response

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import victor.training.spring.exception.CommentRejectedException;
 import victor.training.spring.sql.Comment;
 import victor.training.spring.sql.CommentRepo;
 import victor.training.spring.sql.Post;
@@ -32,7 +33,7 @@ public class UC5_CreateComment {
     if (safe && unlocked) {
       commentRepo.save(new Comment(post.id(), request.comment(), request.name()));
     } else {
-      throw new IllegalArgumentException("Comment Rejected");
+      throw new CommentRejectedException();
     }
   }
 

@@ -31,6 +31,14 @@ spring:
         onLikeEvent-out-0:
           destination: liked-post-titles
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics
+  endpoint:
+    health:
+      show-details: when_authorized
 logging:
   pattern.console: "%d{HH:mm:ss.SSS} [%12.12t] %clr(${LOG_LEVEL_PATTERN:%5p}) %.20logger{20} - %msg%n"
   level:

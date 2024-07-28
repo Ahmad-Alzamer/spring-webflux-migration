@@ -2,6 +2,7 @@ package victor.training.spring.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -9,6 +10,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 import reactor.rabbitmq.OutboundMessage;
@@ -34,6 +36,7 @@ public class UC4_CreatePost {
   }
 
   @PostMapping("posts")
+  @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("isAuthenticated()")
   @Transactional
   public Mono<Long> createPost(@RequestBody CreatePostRequest request) {
@@ -57,9 +60,9 @@ public class UC4_CreatePost {
 //    return  Mono.when(eventMono,commentMono)
 //            .then();
 
-        return  postRepo.save(request.toPost())
-            .delayUntil(post -> saveCommentAndSendEventConcurrently(request,post))
-            .map(Post::id);
+        return postRepo.save(request.toPost())
+                .delayUntil(post -> saveCommentAndSendEventConcurrently(request,post))
+                .map(Post::id);
   }
   private Mono<Void> saveCommentAndSendEventConcurrently(CreatePostRequest request, Post post){
     var eventMono = sendPostCreatedEvent("Post created: " + post.id());
